@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Services\ShoppingCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -131,6 +132,66 @@ class CheckoutController extends Controller
             ->firstOrFail();
 
         return view('pages.home.checkout.confirmation', compact('order'));
+    }
+
+    public function submitPaymentProof(Request $request, string $orderNumber)
+    {
+        $validated = $request->validate([
+            'customer_email' => ['required', 'email', 'max:255'],
+            'transaction_reference' => ['nullable', 'string', 'max:255'],
+            'proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ]);
+
+        $order = Order::with('payment')->where('order_number', $orderNumber)->firstOrFail();
+        if (! hash_equals(strtolower($order->customer_email), strtolower($validated['customer_email']))) {
+            abort(404);
+        }
+
+        if (! $order->payment || ! in_array($order->payment->status, [
+            Payment::STATUS_AWAITING_TRANSFER,
+            Payment::STATUS_REJECTED,
+        ], true)) {
+            return back()->withErrors(['proof' => 'This order is not currently accepting payment proof.']);
+        }
+
+        $proofPath = $request->file('proof')->store('payment-proofs', 'local');
+        $previousProofPath = $order->payment->proof_path;
+
+        try {
+            DB::transaction(function () use ($orderNumber, $validated, $proofPath) {
+                $lockedOrder = Order::where('order_number', $orderNumber)->lockForUpdate()->firstOrFail();
+                $payment = $lockedOrder->payment()->lockForUpdate()->firstOrFail();
+
+                if (! in_array($payment->status, [
+                    Payment::STATUS_AWAITING_TRANSFER,
+                    Payment::STATUS_REJECTED,
+                ], true)) {
+                    throw ValidationException::withMessages([
+                        'proof' => 'This order is not currently accepting payment proof.',
+                    ]);
+                }
+
+                $payment->update([
+                    'status' => Payment::STATUS_PENDING_REVIEW,
+                    'transaction_reference' => $validated['transaction_reference'] ?? null,
+                    'proof_path' => $proofPath,
+                    'transferred_at' => now(),
+                    'reviewed_by' => null,
+                    'review_note' => null,
+                ]);
+            });
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($proofPath);
+            throw $exception;
+        }
+
+        if ($previousProofPath) {
+            Storage::disk('local')->delete($previousProofPath);
+        }
+
+        return redirect()
+            ->route('checkout.confirmation', $orderNumber)
+            ->with('status', 'Payment proof submitted for review.');
     }
 
     private function newOrderNumber(): string

@@ -15,8 +15,13 @@ public disk; run `php artisan storage:link` to serve them.
 
 Customers can browse products at `/`, add available products to their session
 cart, and place guest orders using `/checkout`. Checkout currently has no
-shipping charge and records bank-transfer payments as awaiting transfer; bank
-account instructions and transfer review are not configured yet.
+shipping charge. Customers can submit transfer proof from the order confirmation
+page using the order email; uploaded proof is stored privately and is visible
+only to administrators. Administrators can review proof, advance paid orders
+through fulfillment, record a tracking number, and cancel unpaid orders (which
+restores stock). Cancelling paid orders is disabled until a refund workflow is
+implemented. Bank account details still need to be provided by the store.
+Order management is available under `/console/orders` after administrator login.
 
 Run the automated tests with:
 

@@ -23,4 +23,5 @@
     </div>
 
     <a class="btn btn-primary" href="{{ route('admin.products.index') }}">Manage products</a>
+    <a class="btn btn-outline-primary" href="{{ route('admin.orders.index') }}">Manage orders</a>
 </div>

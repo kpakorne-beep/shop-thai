@@ -23,3 +23,6 @@ Route::get('/checkout', 'Home\\CheckoutController@create')->name('checkout.creat
 Route::post('/checkout', 'Home\\CheckoutController@store')->name('checkout.store');
 Route::get('/orders/{orderNumber}/confirmation', 'Home\\CheckoutController@confirmation')
     ->name('checkout.confirmation');
+Route::post('/orders/{orderNumber}/payment-proof', 'Home\\CheckoutController@submitPaymentProof')
+    ->middleware('throttle:10,1')
+    ->name('checkout.payment-proof');

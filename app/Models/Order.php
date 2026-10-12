@@ -33,12 +33,17 @@ class Order extends Model
         'subtotal',
         'shipping_fee',
         'total',
+        'tracking_number',
+        'shipped_at',
+        'delivered_at',
     ];
 
     protected $casts = [
         'subtotal' => 'decimal:2',
         'shipping_fee' => 'decimal:2',
         'total' => 'decimal:2',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

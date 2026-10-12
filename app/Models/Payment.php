@@ -14,6 +14,7 @@ class Payment extends Model
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_CONFIRMED = 'confirmed';
     public const STATUS_REJECTED = 'rejected';
+    public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'order_id',

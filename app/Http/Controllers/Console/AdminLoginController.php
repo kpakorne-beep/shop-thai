@@ -10,7 +10,7 @@ class AdminLoginController extends Controller
 {
     public function create()
     {
-        return view('pages.admin.auth.login');
+        return $this->view('pages.admin.auth.login');
     }
 
     public function store(Request $request)

@@ -14,6 +14,17 @@ class AdminProductManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_login_screen_loads_the_admin_layout_and_stylesheet()
+    {
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('css/app.css')
+            ->assertSee('admin-login-page')
+            ->assertSee('admin-login-layout')
+            ->assertDontSee('cart-link')
+            ->assertDontSee('Track order');
+    }
+
     public function test_only_administrators_can_access_product_management()
     {
         $this->get(route('admin.products.index'))

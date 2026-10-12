@@ -42,7 +42,7 @@ class ExampleShopController extends Controller
 
         $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-        return $this->view('pages.home.example_shop.index', compact('products', 'categories', 'search', 'categorySlug'));
+        return $this->view('pages.home.example_shop.index', compact('products', 'categories', 'search', 'categorySlug'), 'Shop');
     }
 
     public function show(string $slug)
@@ -52,7 +52,7 @@ class ExampleShopController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        return $this->view('pages.home.example_shop.show', compact('product'));
+        return $this->view('pages.home.example_shop.show', compact('product'), $product->name);
     }
 
     public function getIndex(Request $request)

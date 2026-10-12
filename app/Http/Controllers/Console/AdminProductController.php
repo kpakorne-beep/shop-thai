@@ -15,7 +15,7 @@ class AdminProductController extends Controller
     {
         $products = Product::with('category')->latest()->paginate(15);
 
-        return $this->view('pages.admin.products.index', compact('products'));
+        return $this->view('pages.admin.products.index', compact('products'), 'Products');
     }
 
     public function create()
@@ -23,7 +23,7 @@ class AdminProductController extends Controller
         $product = new Product(['is_active' => true]);
         $categories = Category::where('is_active', true)->orderBy('name')->get();
 
-        return $this->view('pages.admin.products.form', compact('product', 'categories'));
+        return $this->view('pages.admin.products.form', compact('product', 'categories'), 'Create Product');
     }
 
     public function store(Request $request)
@@ -51,7 +51,7 @@ class AdminProductController extends Controller
             ->orderBy('name')
             ->get();
 
-        return $this->view('pages.admin.products.form', compact('product', 'categories'));
+        return $this->view('pages.admin.products.form', compact('product', 'categories'), 'Edit '.$product->name);
     }
 
     public function update(Request $request, Product $product)

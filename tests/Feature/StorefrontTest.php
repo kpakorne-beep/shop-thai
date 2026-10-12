@@ -103,6 +103,7 @@ class StorefrontTest extends TestCase
 
         $this->get(route('shop.products.show', $activeProduct->slug))
             ->assertOk()
+            ->assertSee('<title>Canvas Bag | Example Shop</title>', false)
             ->assertSee('A cotton carry bag')
             ->assertSee('In stock (3 available)');
 

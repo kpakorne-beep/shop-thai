@@ -37,7 +37,7 @@ class CheckoutController extends Controller
         $shippingFee = self::SHIPPING_FEE;
         $total = $subtotal + $shippingFee;
 
-        return $this->view('pages.home.checkout.create', compact('items', 'subtotal', 'shippingFee', 'total'));
+        return $this->view('pages.home.checkout.create', compact('items', 'subtotal', 'shippingFee', 'total'), 'Checkout');
     }
 
     public function store(Request $request, OrderNotificationService $notifications)
@@ -140,7 +140,7 @@ class CheckoutController extends Controller
             'instructions',
         ])->pluck('value', 'key');
 
-        return $this->view('pages.home.checkout.confirmation', compact('order', 'bankTransferDetails'));
+        return $this->view('pages.home.checkout.confirmation', compact('order', 'bankTransferDetails'), 'Order '.$order->order_number);
     }
 
     public function submitPaymentProof(Request $request, string $orderNumber, OrderNotificationService $notifications)

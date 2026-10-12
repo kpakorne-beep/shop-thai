@@ -20,7 +20,7 @@ class AdminBankTransferSettingsController extends Controller
     {
         $settings = ShopSetting::whereIn('key', self::KEYS)->pluck('value', 'key');
 
-        return $this->view('pages.admin.settings.bank-transfer', compact('settings'));
+        return $this->view('pages.admin.settings.bank-transfer', compact('settings'), 'Bank Transfer Settings');
     }
 
     public function update(Request $request)

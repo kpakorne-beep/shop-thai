@@ -13,14 +13,14 @@ class AdminCategoryController extends Controller
     {
         $categories = Category::withCount('products')->orderBy('name')->paginate(20);
 
-        return $this->view('pages.admin.categories.index', compact('categories'));
+        return $this->view('pages.admin.categories.index', compact('categories'), 'Categories');
     }
 
     public function create()
     {
         $category = new Category(['is_active' => true]);
 
-        return $this->view('pages.admin.categories.form', compact('category'));
+        return $this->view('pages.admin.categories.form', compact('category'), 'Create Category');
     }
 
     public function store(Request $request)
@@ -34,7 +34,7 @@ class AdminCategoryController extends Controller
 
     public function edit(Category $category)
     {
-        return $this->view('pages.admin.categories.form', compact('category'));
+        return $this->view('pages.admin.categories.form', compact('category'), 'Edit '.$category->name);
     }
 
     public function update(Request $request, Category $category)

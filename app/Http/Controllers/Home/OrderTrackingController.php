@@ -11,7 +11,7 @@ class OrderTrackingController extends Controller
 {
     public function create()
     {
-        return $this->view('pages.home.orders.track');
+        return $this->view('pages.home.orders.track', [], 'Track Your Order');
     }
 
     public function lookup(Request $request)
@@ -31,6 +31,6 @@ class OrderTrackingController extends Controller
             ]);
         }
 
-        return $this->view('pages.home.orders.track', compact('order'));
+        return $this->view('pages.home.orders.track', compact('order'), 'Track Order '.$order->order_number);
     }
 }

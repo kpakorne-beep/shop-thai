@@ -13,7 +13,9 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertStatus(200)
+            ->assertSee('<html lang="en">', false)
+            ->assertSee('<title>Shop | Example Shop</title>', false);
     }
 
     public function test_shop_page_renders_inside_the_shared_layout()

@@ -48,14 +48,14 @@ class AdminOrderController extends Controller
         return $this->view('pages.admin.orders.index', [
             'orders' => $orders,
             'filters' => $filters,
-        ]);
+        ], 'Orders');
     }
 
     public function show(Order $order)
     {
         $order->load(['items', 'payment.reviewer']);
 
-        return $this->view('pages.admin.orders.show', compact('order'));
+        return $this->view('pages.admin.orders.show', compact('order'), 'Order '.$order->order_number);
     }
 
     public function proof(Order $order)

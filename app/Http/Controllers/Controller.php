@@ -11,8 +11,8 @@ class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    public function view($page, $data = [])
+    public function view($page, $data = [], string $title = 'Example Shop')
     {
-        return view('layouts.template', compact('page', 'data'));
+        return view('layouts.template', compact('page', 'data', 'title'));
     }
 }

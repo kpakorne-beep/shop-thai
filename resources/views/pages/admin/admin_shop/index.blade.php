@@ -25,4 +25,5 @@
     <a class="btn btn-primary" href="{{ route('admin.products.index') }}">Manage products</a>
     <a class="btn btn-outline-primary" href="{{ route('admin.categories.index') }}">Manage categories</a>
     <a class="btn btn-outline-primary" href="{{ route('admin.orders.index') }}">Manage orders</a>
+    <a class="btn btn-outline-primary" href="{{ route('admin.settings.bank-transfer.edit') }}">Bank transfer details</a>
 </div>

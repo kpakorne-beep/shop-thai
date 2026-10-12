@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ShopSetting;
 use App\Services\ShoppingCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -130,8 +131,14 @@ class CheckoutController extends Controller
         $order = Order::with(['items', 'payment'])
             ->where('order_number', $orderNumber)
             ->firstOrFail();
+        $bankTransferDetails = ShopSetting::whereIn('key', [
+            'bank_name',
+            'account_name',
+            'account_number',
+            'instructions',
+        ])->pluck('value', 'key');
 
-        return view('pages.home.checkout.confirmation', compact('order'));
+        return view('pages.home.checkout.confirmation', compact('order', 'bankTransferDetails'));
     }
 
     public function submitPaymentProof(Request $request, string $orderNumber)

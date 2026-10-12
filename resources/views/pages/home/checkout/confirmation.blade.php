@@ -46,7 +46,25 @@
         <div class="card mt-4">
             <div class="card-body">
                 <h2 class="h4">Submit bank transfer proof</h2>
-                <p class="text-muted">Enter the email used for the order and attach an image or PDF. The store has not configured bank account details on this page yet.</p>
+                <p class="text-muted">Transfer the exact order total using the details below, then attach your receipt.</p>
+                @if (!empty($bankTransferDetails['bank_name']) && !empty($bankTransferDetails['account_name']) && !empty($bankTransferDetails['account_number']))
+                    <dl class="row">
+                        <dt class="col-sm-4">Bank</dt>
+                        <dd class="col-sm-8">{{ $bankTransferDetails['bank_name'] }}</dd>
+                        <dt class="col-sm-4">Account name</dt>
+                        <dd class="col-sm-8">{{ $bankTransferDetails['account_name'] }}</dd>
+                        <dt class="col-sm-4">Account number</dt>
+                        <dd class="col-sm-8"><strong>{{ $bankTransferDetails['account_number'] }}</strong></dd>
+                    </dl>
+                    @if (!empty($bankTransferDetails['instructions']))
+                        <p class="mb-3">{{ $bankTransferDetails['instructions'] }}</p>
+                    @endif
+                @else
+                    <div class="alert alert-warning" role="alert">
+                        Bank transfer details are not available yet. Please contact the store before making a transfer.
+                    </div>
+                @endif
+                <p class="text-muted">Enter the email used for the order and attach an image or PDF.</p>
                 <form method="POST" enctype="multipart/form-data" action="{{ route('checkout.payment-proof', $order->order_number) }}">
                     @csrf
                     <div class="mb-3">

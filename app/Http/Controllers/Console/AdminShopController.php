@@ -11,7 +11,8 @@ class AdminShopController extends Controller
     {
         $productCount = Product::count();
         $lowStockCount = Product::where('stock', '<=', 5)->count();
+        $orderCount = \App\Models\Order::count();
 
-        return view('pages.admin.admin_shop.index', compact('productCount', 'lowStockCount'));
+        return view('pages.admin.admin_shop.index', compact('productCount', 'lowStockCount', 'orderCount'));
     }
 }

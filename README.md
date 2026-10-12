@@ -20,7 +20,9 @@ page using the order email; uploaded proof is stored privately and is visible
 only to administrators. Administrators can review proof, advance paid orders
 through fulfillment, record a tracking number, and cancel unpaid orders (which
 restores stock). Cancelling paid orders is disabled until a refund workflow is
-implemented. Bank account details still need to be provided by the store.
+implemented. Configure the bank name, account holder, account number, and
+optional instructions under `/console/settings/bank-transfer`; these details
+are shown on unpaid order confirmation pages.
 Order management is available under `/console/orders` after administrator login.
 Categories can be created, edited, and activated/deactivated under
 `/console/categories`. Deactivating a category preserves its products and

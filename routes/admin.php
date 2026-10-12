@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Console\AdminLoginController;
 use App\Http\Controllers\Console\AdminCategoryController;
+use App\Http\Controllers\Console\AdminBankTransferSettingsController;
 use App\Http\Controllers\Console\AdminOrderController;
 use App\Http\Controllers\Console\AdminProductController;
 use App\Http\Controllers\Console\AdminShopController;
@@ -29,6 +30,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/categories/{category}', [AdminCategoryController::class, 'update'])->name('admin.categories.update');
     Route::patch('/categories/{category}/toggle', [AdminCategoryController::class, 'toggle'])
         ->name('admin.categories.toggle');
+    Route::get('/settings/bank-transfer', [AdminBankTransferSettingsController::class, 'edit'])
+        ->name('admin.settings.bank-transfer.edit');
+    Route::put('/settings/bank-transfer', [AdminBankTransferSettingsController::class, 'update'])
+        ->name('admin.settings.bank-transfer.update');
     Route::get('/products', [AdminProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [AdminProductController::class, 'create'])->name('admin.products.create');
     Route::post('/products', [AdminProductController::class, 'store'])->name('admin.products.store');

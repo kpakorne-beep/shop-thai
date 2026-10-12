@@ -13,6 +13,5 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', 'Home\\ExampleShopController@index')->name('shop.index');
+Route::get('/products/{slug}', 'Home\\ExampleShopController@show')->name('shop.products.show');

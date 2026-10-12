@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Mail\OrderUpdateMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CheckoutTest extends TestCase
@@ -14,6 +16,8 @@ class CheckoutTest extends TestCase
 
     public function test_guest_can_add_to_cart_and_place_a_bank_transfer_order()
     {
+        Mail::fake();
+
         $product = Product::create([
             'name' => 'Canvas Bag',
             'slug' => 'canvas-bag',
@@ -40,6 +44,17 @@ class CheckoutTest extends TestCase
             ->assertRedirect();
 
         $order = Order::with(['items', 'payment'])->firstOrFail();
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->order->is($order)
+                && $mail->updateMessage === 'We received your order.';
+        });
+        $emailHtml = view('emails.orders.update', [
+            'order' => $order,
+            'updateMessage' => 'We received your order.',
+        ])->render();
+        $this->assertStringContainsString($order->order_number, $emailHtml);
+        $this->assertStringNotContainsString($order->shipping_address, $emailHtml);
         $this->assertNull($order->user_id);
         $this->assertSame(Order::STATUS_PENDING_PAYMENT, $order->status);
         $this->assertSame('51.00', $order->subtotal);

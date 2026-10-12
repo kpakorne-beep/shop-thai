@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Services\OrderNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -65,7 +66,7 @@ class AdminOrderController extends Controller
         return Storage::disk('local')->download($order->payment->proof_path);
     }
 
-    public function reviewPayment(Request $request, Order $order)
+    public function reviewPayment(Request $request, Order $order, OrderNotificationService $notifications)
     {
         $validated = $request->validate([
             'decision' => ['required', 'in:confirmed,rejected'],
@@ -100,10 +101,15 @@ class AdminOrderController extends Controller
             }
         });
 
+        $message = $validated['decision'] === Payment::STATUS_CONFIRMED
+            ? 'Your payment has been confirmed.'
+            : 'Your payment proof was rejected. Please review the note and submit a new proof.';
+        $notifications->send($order->fresh(), $message);
+
         return redirect()->route('admin.orders.show', $order)->with('status', 'Payment review saved.');
     }
 
-    public function updateStatus(Request $request, Order $order)
+    public function updateStatus(Request $request, Order $order, OrderNotificationService $notifications)
     {
         $validated = $request->validate([
             'status' => ['required', 'in:shipped,delivered,cancelled'],
@@ -178,6 +184,13 @@ class AdminOrderController extends Controller
                 ]);
             }
         });
+
+        $messages = [
+            Order::STATUS_SHIPPED => 'Your order has been shipped.',
+            Order::STATUS_DELIVERED => 'Your order has been marked as delivered.',
+            Order::STATUS_CANCELLED => 'Your order has been cancelled.',
+        ];
+        $notifications->send($order->fresh(), $messages[$validated['status']]);
 
         return redirect()->route('admin.orders.show', $order)->with('status', 'Order status updated.');
     }

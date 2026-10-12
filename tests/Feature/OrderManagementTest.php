@@ -7,8 +7,10 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
+use App\Mail\OrderUpdateMail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -18,6 +20,7 @@ class OrderManagementTest extends TestCase
 
     public function test_customer_can_submit_proof_using_the_order_email_and_admin_can_reject_it()
     {
+        Mail::fake();
         Storage::fake('local');
         $product = $this->createProduct(4);
         $order = $this->createOrder($product, 1);
@@ -32,6 +35,10 @@ class OrderManagementTest extends TestCase
             'transaction_reference' => 'TRANSFER-123',
             'proof' => $this->proofFile(),
         ])->assertRedirect(route('checkout.confirmation', $order->order_number));
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'We received your bank transfer proof and will review it shortly.';
+        });
 
         $order->load('payment');
         $proofPath = $order->payment->proof_path;
@@ -61,12 +68,17 @@ class OrderManagementTest extends TestCase
                 'review_note' => 'The amount does not match.',
             ])
             ->assertRedirect(route('admin.orders.show', $order));
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'Your payment proof was rejected. Please review the note and submit a new proof.';
+        });
 
         $order->refresh()->load('payment');
         $this->assertSame(Payment::STATUS_REJECTED, $order->payment->status);
         $this->assertSame('The amount does not match.', $order->payment->review_note);
         $this->assertSame(Order::STATUS_PENDING_PAYMENT, $order->status);
         $this->assertSame(3, $product->fresh()->stock);
+        Mail::assertSent(OrderUpdateMail::class, 2);
 
         $this->get(route('checkout.confirmation', $order->order_number))
             ->assertOk()
@@ -76,6 +88,7 @@ class OrderManagementTest extends TestCase
 
     public function test_admin_confirmation_advances_order_and_validates_delivery_transitions()
     {
+        Mail::fake();
         $product = $this->createProduct(3);
         $order = $this->createOrder($product, 1);
         $admin = $this->createAdmin();
@@ -96,6 +109,10 @@ class OrderManagementTest extends TestCase
         $this->post(route('admin.orders.payment-review', $order), [
             'decision' => Payment::STATUS_CONFIRMED,
         ])->assertRedirect(route('admin.orders.show', $order));
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'Your payment has been confirmed.';
+        });
 
         $this->assertSame(Order::STATUS_PROCESSING, $order->fresh()->status);
         $this->assertSame(Payment::STATUS_CONFIRMED, $order->payment->fresh()->status);
@@ -108,6 +125,11 @@ class OrderManagementTest extends TestCase
             'status' => Order::STATUS_SHIPPED,
             'tracking_number' => 'TRACK-123',
         ])->assertRedirect(route('admin.orders.show', $order));
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'Your order has been shipped.'
+                && $mail->order->tracking_number === 'TRACK-123';
+        });
         $order->refresh();
         $this->assertSame(Order::STATUS_SHIPPED, $order->status);
         $this->assertSame('TRACK-123', $order->tracking_number);
@@ -116,13 +138,19 @@ class OrderManagementTest extends TestCase
         $this->put(route('admin.orders.status', $order), [
             'status' => Order::STATUS_DELIVERED,
         ])->assertRedirect(route('admin.orders.show', $order));
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'Your order has been marked as delivered.';
+        });
         $order->refresh();
         $this->assertSame(Order::STATUS_DELIVERED, $order->status);
         $this->assertNotNull($order->delivered_at);
+        Mail::assertSent(OrderUpdateMail::class, 3);
     }
 
     public function test_cancelling_an_unpaid_order_restores_stock_once()
     {
+        Mail::fake();
         $product = $this->createProduct(5);
         $order = $this->createOrder($product, 3);
         $admin = $this->createAdmin();
@@ -136,11 +164,16 @@ class OrderManagementTest extends TestCase
         $this->assertSame(Order::STATUS_CANCELLED, $order->fresh()->status);
         $this->assertSame(Payment::STATUS_CANCELLED, $order->payment->fresh()->status);
         $this->assertSame(5, $product->fresh()->stock);
+        Mail::assertSent(OrderUpdateMail::class, function (OrderUpdateMail $mail) use ($order) {
+            return $mail->hasTo($order->customer_email)
+                && $mail->updateMessage === 'Your order has been cancelled.';
+        });
 
         $this->put(route('admin.orders.status', $order), [
             'status' => Order::STATUS_CANCELLED,
         ])->assertSessionHasErrors('status');
         $this->assertSame(5, $product->fresh()->stock);
+        Mail::assertSent(OrderUpdateMail::class, 1);
     }
 
     public function test_paid_order_cannot_be_cancelled_without_a_refund_workflow()

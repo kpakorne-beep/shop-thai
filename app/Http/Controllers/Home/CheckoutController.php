@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ShopSetting;
+use App\Services\OrderNotificationService;
 use App\Services\ShoppingCart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +40,7 @@ class CheckoutController extends Controller
         return view('pages.home.checkout.create', compact('items', 'subtotal', 'shippingFee', 'total'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, OrderNotificationService $notifications)
     {
         $validated = $request->validate([
             'customer_name' => ['required', 'string', 'max:255'],
@@ -122,6 +123,7 @@ class CheckoutController extends Controller
         });
 
         $request->session()->forget('cart');
+        $notifications->send($order, 'We received your order.');
 
         return redirect()->route('checkout.confirmation', $order->order_number);
     }
@@ -141,7 +143,7 @@ class CheckoutController extends Controller
         return view('pages.home.checkout.confirmation', compact('order', 'bankTransferDetails'));
     }
 
-    public function submitPaymentProof(Request $request, string $orderNumber)
+    public function submitPaymentProof(Request $request, string $orderNumber, OrderNotificationService $notifications)
     {
         $validated = $request->validate([
             'customer_email' => ['required', 'email', 'max:255'],
@@ -195,6 +197,8 @@ class CheckoutController extends Controller
         if ($previousProofPath) {
             Storage::disk('local')->delete($previousProofPath);
         }
+
+        $notifications->send($order->fresh(), 'We received your bank transfer proof and will review it shortly.');
 
         return redirect()
             ->route('checkout.confirmation', $orderNumber)

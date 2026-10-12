@@ -33,6 +33,16 @@ Categories can be created, edited, and activated/deactivated under
 existing product assignments; inactive categories are not offered for new
 products or shown in the storefront category filter.
 
+Customers receive email updates when an order is placed, transfer proof is
+submitted, payment is reviewed, or the order is shipped, delivered, or
+cancelled. Configure Laravel's `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`,
+`MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_ENCRYPTION`, `MAIL_FROM_ADDRESS`, and
+`MAIL_FROM_NAME` environment variables for the chosen mail provider. The
+repository's `.env.example` uses MailHog for local development; production
+deployments must configure a working mail provider before accepting orders.
+If the provider is temporarily unavailable, saved order changes remain intact
+and the delivery failure is recorded in Laravel's application log.
+
 Run the automated tests with:
 
 ```sh

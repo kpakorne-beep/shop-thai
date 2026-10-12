@@ -20,7 +20,10 @@ public disk; run `php artisan storage:link` to serve them.
 
 Customers can browse products at `/`, add available products to their session
 cart, and place guest orders using `/checkout`. Checkout currently has no
-shipping charge. Customers can submit transfer proof from the order confirmation
+shipping charge. Checkout submissions are idempotent: retrying the same
+checkout form returns the order already created instead of creating another
+order or deducting stock again. Order totals are calculated in integer cents.
+Customers can submit transfer proof from the order confirmation
 page using the order email; uploaded proof is stored privately and is visible
 only to administrators. Administrators can review proof, advance paid orders
 through fulfillment, record a tracking number, and cancel unpaid orders (which

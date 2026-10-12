@@ -9,6 +9,8 @@ use App\Models\Product;
 use App\Models\ShopSetting;
 use App\Services\OrderNotificationService;
 use App\Services\ShoppingCart;
+use App\Support\Money;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,11 +19,17 @@ use Illuminate\Validation\ValidationException;
 
 class CheckoutController extends Controller
 {
-    private const SHIPPING_FEE = 0;
+    private const SHIPPING_FEE_CENTS = 0;
 
     public function create(Request $request, ShoppingCart $shoppingCart)
     {
-        $items = $shoppingCart->items($request->session()->get('cart', []));
+        try {
+            $cart = $this->normalizeCart($request->session()->get('cart', []));
+        } catch (ValidationException $exception) {
+            return redirect()->route('cart.index')->withErrors($exception->errors());
+        }
+
+        $items = $shoppingCart->items($cart);
 
         if ($items->isEmpty()) {
             return redirect()->route('cart.index')->withErrors(['cart' => 'Add a product to your cart before checkout.']);
@@ -33,11 +41,18 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->withErrors(['cart' => 'Review unavailable products in your cart before checkout.']);
         }
 
-        $subtotal = $shoppingCart->subtotal($items);
-        $shippingFee = self::SHIPPING_FEE;
-        $total = $subtotal + $shippingFee;
+        $checkoutToken = $request->session()->get('checkout_token');
+        if (! $checkoutToken || Order::where('checkout_token', $checkoutToken)->exists()) {
+            $checkoutToken = (string) Str::uuid();
+            $request->session()->put('checkout_token', $checkoutToken);
+        }
 
-        return $this->view('pages.home.checkout.create', compact('items', 'subtotal', 'shippingFee', 'total'), 'Checkout');
+        $subtotalCents = Money::toCents($shoppingCart->subtotal($items));
+        $subtotal = Money::fromCents($subtotalCents);
+        $shippingFee = Money::fromCents(self::SHIPPING_FEE_CENTS);
+        $total = Money::fromCents($subtotalCents + self::SHIPPING_FEE_CENTS);
+
+        return $this->view('pages.home.checkout.create', compact('items', 'subtotal', 'shippingFee', 'total', 'checkoutToken'), 'Checkout');
     }
 
     public function store(Request $request, OrderNotificationService $notifications)
@@ -51,78 +66,106 @@ class CheckoutController extends Controller
             'shipping_district' => ['required', 'string', 'max:255'],
             'shipping_province' => ['required', 'string', 'max:255'],
             'shipping_postal_code' => ['required', 'string', 'max:20'],
+            'checkout_token' => ['required', 'uuid'],
         ]);
+
+        $existingOrder = Order::where('checkout_token', $validated['checkout_token'])->first();
+        if ($existingOrder) {
+            return redirect()->route('checkout.confirmation', $existingOrder->order_number);
+        }
+
+        if (! hash_equals((string) $request->session()->get('checkout_token'), $validated['checkout_token'])) {
+            throw ValidationException::withMessages([
+                'checkout_token' => 'This checkout session has expired. Please review your cart and try again.',
+            ]);
+        }
 
         $cart = $request->session()->get('cart', []);
         if (empty($cart)) {
             return redirect()->route('cart.index')->withErrors(['cart' => 'Your cart is empty.']);
         }
 
-        $order = DB::transaction(function () use ($cart, $validated, $request) {
-            $productIds = array_map('intval', array_keys($cart));
-            sort($productIds);
-            $products = Product::whereIn('id', $productIds)
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
+        $cart = $this->normalizeCart($cart);
 
-            $subtotalCents = 0;
-            foreach ($cart as $productId => $quantity) {
-                $product = $products->get((int) $productId);
-                if (! $product || ! $product->is_active || $quantity < 1 || $product->stock < $quantity) {
-                    throw ValidationException::withMessages([
-                        'cart' => 'A product is no longer available in the requested quantity. Please review your cart.',
-                    ]);
+        try {
+            $order = DB::transaction(function () use ($cart, $validated, $request) {
+                $productIds = array_keys($cart);
+                sort($productIds);
+                $products = Product::whereIn('id', $productIds)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                $subtotalCents = 0;
+                foreach ($cart as $productId => $quantity) {
+                    $product = $products->get($productId);
+                    if (! $product || ! $product->is_active || $product->stock < $quantity) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'A product is no longer available in the requested quantity. Please review your cart.',
+                        ]);
+                    }
+
+                    $subtotalCents += Money::toCents($product->price) * $quantity;
+                    if ($subtotalCents > 999999999999) {
+                        throw ValidationException::withMessages([
+                            'cart' => 'The order total exceeds the supported amount.',
+                        ]);
+                    }
                 }
 
-                $subtotalCents += (int) round((float) $product->price * 100) * (int) $quantity;
-            }
-
-            $subtotal = $subtotalCents / 100;
-            $shippingFee = self::SHIPPING_FEE;
-            $total = $subtotal + $shippingFee;
-            $order = Order::create([
-                'order_number' => $this->newOrderNumber(),
-                'user_id' => $request->user() ? $request->user()->id : null,
-                'status' => Order::STATUS_PENDING_PAYMENT,
-                'customer_name' => $validated['customer_name'],
-                'customer_email' => $validated['customer_email'],
-                'customer_phone' => $validated['customer_phone'],
-                'shipping_address' => $validated['shipping_address'],
-                'shipping_subdistrict' => $validated['shipping_subdistrict'],
-                'shipping_district' => $validated['shipping_district'],
-                'shipping_province' => $validated['shipping_province'],
-                'shipping_postal_code' => $validated['shipping_postal_code'],
-                'subtotal' => $subtotal,
-                'shipping_fee' => $shippingFee,
-                'total' => $total,
-            ]);
-
-            foreach ($cart as $productId => $quantity) {
-                $product = $products->get((int) $productId);
-                $lineTotalCents = (int) round((float) $product->price * 100) * (int) $quantity;
-                $order->items()->create([
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'sku' => $product->sku,
-                    'unit_price' => $product->price,
-                    'quantity' => $quantity,
-                    'line_total' => $lineTotalCents / 100,
+                $totalCents = $subtotalCents + self::SHIPPING_FEE_CENTS;
+                $order = Order::create([
+                    'order_number' => $this->newOrderNumber(),
+                    'checkout_token' => $validated['checkout_token'],
+                    'user_id' => $request->user() ? $request->user()->id : null,
+                    'status' => Order::STATUS_PENDING_PAYMENT,
+                    'customer_name' => $validated['customer_name'],
+                    'customer_email' => $validated['customer_email'],
+                    'customer_phone' => $validated['customer_phone'],
+                    'shipping_address' => $validated['shipping_address'],
+                    'shipping_subdistrict' => $validated['shipping_subdistrict'],
+                    'shipping_district' => $validated['shipping_district'],
+                    'shipping_province' => $validated['shipping_province'],
+                    'shipping_postal_code' => $validated['shipping_postal_code'],
+                    'subtotal' => Money::fromCents($subtotalCents),
+                    'shipping_fee' => Money::fromCents(self::SHIPPING_FEE_CENTS),
+                    'total' => Money::fromCents($totalCents),
                 ]);
-                $product->decrement('stock', (int) $quantity);
+
+                foreach ($cart as $productId => $quantity) {
+                    $product = $products->get($productId);
+                    $lineTotalCents = Money::toCents($product->price) * $quantity;
+                    $order->items()->create([
+                        'product_id' => $product->id,
+                        'product_name' => $product->name,
+                        'sku' => $product->sku,
+                        'unit_price' => $product->price,
+                        'quantity' => $quantity,
+                        'line_total' => Money::fromCents($lineTotalCents),
+                    ]);
+                    $product->decrement('stock', $quantity);
+                }
+
+                $order->payment()->create([
+                    'method' => 'bank_transfer',
+                    'status' => Payment::STATUS_AWAITING_TRANSFER,
+                    'amount' => Money::fromCents($totalCents),
+                ]);
+
+                return $order;
+            });
+        } catch (QueryException $exception) {
+            $existingOrder = Order::where('checkout_token', $validated['checkout_token'])->first();
+            if (! $existingOrder) {
+                throw $exception;
             }
 
-            $order->payment()->create([
-                'method' => 'bank_transfer',
-                'status' => Payment::STATUS_AWAITING_TRANSFER,
-                'amount' => $total,
-            ]);
-
-            return $order;
-        });
+            return redirect()->route('checkout.confirmation', $existingOrder->order_number);
+        }
 
         $request->session()->forget('cart');
+        $request->session()->forget('checkout_token');
         $notifications->send($order, 'We received your order.');
 
         return redirect()->route('checkout.confirmation', $order->order_number);
@@ -212,5 +255,34 @@ class CheckoutController extends Controller
         } while (Order::where('order_number', $orderNumber)->exists());
 
         return $orderNumber;
+    }
+
+    private function normalizeCart($cart): array
+    {
+        if (! is_array($cart)) {
+            throw ValidationException::withMessages([
+                'cart' => 'Your cart data is invalid. Please review your cart.',
+            ]);
+        }
+
+        $normalized = [];
+        foreach ($cart as $productId => $quantity) {
+            $productId = (string) $productId;
+            $validQuantity = filter_var($quantity, FILTER_VALIDATE_INT);
+            if (! ctype_digit($productId)
+                || (int) $productId < 1
+                || $validQuantity === false
+                || $validQuantity < 1
+                || $validQuantity > 100
+                || array_key_exists((int) $productId, $normalized)) {
+                throw ValidationException::withMessages([
+                    'cart' => 'Your cart contains invalid product data. Please review your cart.',
+                ]);
+            }
+
+            $normalized[(int) $productId] = $validQuantity;
+        }
+
+        return $normalized;
     }
 }

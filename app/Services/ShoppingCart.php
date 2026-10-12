@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Support\Money;
 use Illuminate\Support\Collection;
 
 class ShoppingCart
@@ -19,15 +20,21 @@ class ShoppingCart
                 'product' => $product,
                 'quantity' => (int) $quantity,
                 'available' => $available,
-                'line_total' => $product ? (float) $product->price * (int) $quantity : 0,
+                'line_total' => $product
+                    ? Money::fromCents(Money::toCents($product->price) * (int) $quantity)
+                    : '0.00',
             ];
         });
     }
 
-    public function subtotal(Collection $items): float
+    public function subtotal(Collection $items): string
     {
-        return (float) $items
+        $subtotalCents = $items
             ->where('available', true)
-            ->sum('line_total');
+            ->sum(function ($item) {
+                return Money::toCents($item['line_total']);
+            });
+
+        return Money::fromCents($subtotalCents);
     }
 }

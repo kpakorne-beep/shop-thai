@@ -15,6 +15,7 @@
         <div class="col-12 col-lg-7">
             <form method="POST" action="{{ route('checkout.store') }}">
                 @csrf
+                <input type="hidden" name="checkout_token" value="{{ $checkoutToken }}">
                 <h2 class="h4 mb-3">Contact and shipping details</h2>
                 <div class="mb-3">
                     <label class="form-label" for="customer_name">Full name</label>

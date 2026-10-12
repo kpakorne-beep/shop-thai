@@ -24,6 +24,8 @@ implemented. Configure the bank name, account holder, account number, and
 optional instructions under `/console/settings/bank-transfer`; these details
 are shown on unpaid order confirmation pages.
 Order management is available under `/console/orders` after administrator login.
+Customers can look up order and delivery status at `/order-status` using the
+order number and checkout email. Lookup attempts are rate-limited.
 Categories can be created, edited, and activated/deactivated under
 `/console/categories`. Deactivating a category preserves its products and
 existing product assignments; inactive categories are not offered for new

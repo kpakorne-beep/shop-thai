@@ -19,6 +19,7 @@
                 <span aria-hidden="true">Bag</span>
                 <span class="cart-count">{{ array_sum(session('cart', [])) }}</span>
             </a>
+            <a class="btn btn-link" href="{{ route('orders.track') }}">Track order</a>
         </div>
     </nav>
     <main class="page">

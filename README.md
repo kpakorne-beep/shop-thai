@@ -5,10 +5,15 @@ an administrator account before signing in:
 
 ```sh
 php artisan migrate
+php artisan db:seed
 php artisan storage:link
 php artisan admin:create admin@example.com
 ```
 
+The database seeder adds two sample categories and four products for the
+storefront. It can be run more than once without duplicating those records.
+Administrator accounts, orders, and bank transfer details are not seeded;
+create the administrator and configure payment details for your own shop.
 The command prompts for a password (minimum 12 characters). It can create a new
 account or promote an existing account. Product images are stored on Laravel's
 public disk; run `php artisan storage:link` to serve them.

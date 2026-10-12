@@ -42,7 +42,14 @@ class AdminProductController extends Controller
 
     public function edit(Product $product)
     {
-        $categories = Category::where('is_active', true)->orderBy('name')->get();
+        $categories = Category::where(function ($query) use ($product) {
+            $query->where('is_active', true);
+            if ($product->category_id) {
+                $query->orWhere('id', $product->category_id);
+            }
+        })
+            ->orderBy('name')
+            ->get();
 
         return view('pages.admin.products.form', compact('product', 'categories'));
     }

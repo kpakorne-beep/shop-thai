@@ -21,8 +21,8 @@ class ExampleTest extends TestCase
         $response = $this->get('/home/index');
 
         $response->assertStatus(200)
-            ->assertSee('Example-Shop')
-            ->assertSee('<div class="page">', false);
+            ->assertSee('Example Shop')
+            ->assertSee('<main class="page">', false);
     }
 
     public function test_admin_shop_page_renders_the_admin_view()

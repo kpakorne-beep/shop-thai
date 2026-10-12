@@ -22,6 +22,10 @@ through fulfillment, record a tracking number, and cancel unpaid orders (which
 restores stock). Cancelling paid orders is disabled until a refund workflow is
 implemented. Bank account details still need to be provided by the store.
 Order management is available under `/console/orders` after administrator login.
+Categories can be created, edited, and activated/deactivated under
+`/console/categories`. Deactivating a category preserves its products and
+existing product assignments; inactive categories are not offered for new
+products or shown in the storefront category filter.
 
 Run the automated tests with:
 

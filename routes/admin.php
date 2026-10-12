@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Console\AdminLoginController;
+use App\Http\Controllers\Console\AdminCategoryController;
 use App\Http\Controllers\Console\AdminOrderController;
 use App\Http\Controllers\Console\AdminProductController;
 use App\Http\Controllers\Console\AdminShopController;
@@ -21,6 +22,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
         ->name('admin.orders.payment-review');
     Route::put('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])
         ->name('admin.orders.status');
+    Route::get('/categories', [AdminCategoryController::class, 'index'])->name('admin.categories.index');
+    Route::get('/categories/create', [AdminCategoryController::class, 'create'])->name('admin.categories.create');
+    Route::post('/categories', [AdminCategoryController::class, 'store'])->name('admin.categories.store');
+    Route::get('/categories/{category}/edit', [AdminCategoryController::class, 'edit'])->name('admin.categories.edit');
+    Route::put('/categories/{category}', [AdminCategoryController::class, 'update'])->name('admin.categories.update');
+    Route::patch('/categories/{category}/toggle', [AdminCategoryController::class, 'toggle'])
+        ->name('admin.categories.toggle');
     Route::get('/products', [AdminProductController::class, 'index'])->name('admin.products.index');
     Route::get('/products/create', [AdminProductController::class, 'create'])->name('admin.products.create');
     Route::post('/products', [AdminProductController::class, 'store'])->name('admin.products.store');

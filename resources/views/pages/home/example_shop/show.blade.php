@@ -19,6 +19,16 @@
             <p class="h3 text-primary my-3">฿{{ number_format((float) $product->price, 2) }}</p>
             @if ($product->stock > 0)
                 <p class="text-success">In stock ({{ $product->stock }} available)</p>
+                <form class="d-flex flex-wrap gap-2 align-items-end mt-4" method="POST"
+                      action="{{ route('cart.products.store', $product) }}">
+                    @csrf
+                    <div>
+                        <label class="form-label" for="quantity">Quantity</label>
+                        <input class="form-control" id="quantity" name="quantity" type="number"
+                               min="1" max="{{ min($product->stock, 100) }}" value="1" required>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Add to cart</button>
+                </form>
             @else
                 <p class="text-muted">Out of stock</p>
             @endif

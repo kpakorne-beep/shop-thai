@@ -13,6 +13,11 @@ The command prompts for a password (minimum 12 characters). It can create a new
 account or promote an existing account. Product images are stored on Laravel's
 public disk; run `php artisan storage:link` to serve them.
 
+Customers can browse products at `/`, add available products to their session
+cart, and place guest orders using `/checkout`. Checkout currently has no
+shipping charge and records bank-transfer payments as awaiting transfer; bank
+account instructions and transfer review are not configured yet.
+
 Run the automated tests with:
 
 ```sh

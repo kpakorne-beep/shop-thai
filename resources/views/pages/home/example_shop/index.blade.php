@@ -54,7 +54,14 @@
                         </a>
                         <div class="card-footer bg-white border-0 pt-0">
                             @if ($product->stock > 0)
-                                <span class="small text-success">In stock</span>
+                                <div class="d-flex justify-content-between align-items-center gap-2">
+                                    <span class="small text-success">In stock</span>
+                                    <form method="POST" action="{{ route('cart.products.store', $product) }}">
+                                        @csrf
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button class="btn btn-sm btn-primary" type="submit">Add to cart</button>
+                                    </form>
+                                </div>
                             @else
                                 <span class="small text-muted">Out of stock</span>
                             @endif

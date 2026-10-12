@@ -15,3 +15,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', 'Home\\ExampleShopController@index')->name('shop.index');
 Route::get('/products/{slug}', 'Home\\ExampleShopController@show')->name('shop.products.show');
+Route::get('/cart', 'Home\\CartController@index')->name('cart.index');
+Route::post('/cart/products/{product}', 'Home\\CartController@store')->name('cart.products.store');
+Route::put('/cart', 'Home\\CartController@update')->name('cart.update');
+Route::delete('/cart/products/{productId}', 'Home\\CartController@destroy')->name('cart.products.destroy');
+Route::get('/checkout', 'Home\\CheckoutController@create')->name('checkout.create');
+Route::post('/checkout', 'Home\\CheckoutController@store')->name('checkout.store');
+Route::get('/orders/{orderNumber}/confirmation', 'Home\\CheckoutController@confirmation')
+    ->name('checkout.confirmation');

@@ -1,14 +1,15 @@
-<?php namespace App\Http\Controllers\Console;
+<?php
 
-use Illuminate\Http\Request;
+namespace App\Http\Controllers\Console;
+
 use App\Http\Controllers\Controller;
 
-class AdminShopController extends Controller {
-
+class AdminShopController extends Controller
+{
     public function getIndex()
     {
-        sd('666');
         $data = [];
-        return $this->view('pages.home.admin_shop.index',$data);
+
+        return $this->view('pages.admin.admin_shop.index', $data);
     }
 }

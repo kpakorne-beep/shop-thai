@@ -2,6 +2,8 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Console\AdminShopController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,7 +22,5 @@ Artisan::command('inspire', function () {
 
 
 // ADMIN
-Route::get('/index',[
-    'uses' => 'AdminShopController@getIndex',
-    'as'   => 'admin.admin_shop.index.get'
-]);
+Route::get('/index', [AdminShopController::class, 'getIndex'])
+    ->name('admin.admin_shop.index.get');

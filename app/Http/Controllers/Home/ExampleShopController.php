@@ -1,14 +1,14 @@
-<?php namespace App\Http\Controllers\Home;
+<?php
 
-use Illuminate\Http\Request;
+namespace App\Http\Controllers\Home;
+
 use App\Http\Controllers\Controller;
 
-class ExampleShopController extends Controller {
-
+class ExampleShopController extends Controller
+{
     public function getIndex()
     {
-        sd('777');
         $data = [];
-        return $this->view('pages.home.example_shop.index');
+        return $this->view('pages.home.example_shop.index', $data);
     }
 }

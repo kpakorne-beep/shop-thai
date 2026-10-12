@@ -26,8 +26,6 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/console/index');
 
-        $response->assertStatus(200)
-            ->assertSee('Example-Shop')
-            ->assertSee('Welcome Bro');
+        $response->assertRedirect(route('login'));
     }
 }

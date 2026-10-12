@@ -2,8 +2,6 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Console\AdminShopController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,8 +17,3 @@ use App\Http\Controllers\Console\AdminShopController;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
-
-
-// ADMIN
-Route::get('/index', [AdminShopController::class, 'getIndex'])
-    ->name('admin.admin_shop.index.get');

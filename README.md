@@ -1,3 +1,24 @@
+## Example Shop: administrator product management
+
+The admin area is available at `/console/login`. Apply the migrations and create
+an administrator account before signing in:
+
+```sh
+php artisan migrate
+php artisan storage:link
+php artisan admin:create admin@example.com
+```
+
+The command prompts for a password (minimum 12 characters). It can create a new
+account or promote an existing account. Product images are stored on Laravel's
+public disk; run `php artisan storage:link` to serve them.
+
+Run the automated tests with:
+
+```sh
+php artisan test
+```
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
 <p align="center">

@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Console;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 
 class AdminShopController extends Controller
 {
     public function getIndex()
     {
-        $data = [];
+        $productCount = Product::count();
+        $lowStockCount = Product::where('stock', '<=', 5)->count();
 
-        return $this->view('pages.admin.admin_shop.index', $data);
+        return view('pages.admin.admin_shop.index', compact('productCount', 'lowStockCount'));
     }
 }

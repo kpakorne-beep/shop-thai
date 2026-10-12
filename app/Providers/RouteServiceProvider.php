@@ -51,8 +51,7 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->prefix('console')
-                ->namespace($this->namespace.'\Console')
-                ->group(base_path('routes/console.php'));
+                ->group(base_path('routes/admin.php'));
 
             Route::middleware('web')
                 ->prefix('home')

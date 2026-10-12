@@ -24,6 +24,8 @@ implemented. Configure the bank name, account holder, account number, and
 optional instructions under `/console/settings/bank-transfer`; these details
 are shown on unpaid order confirmation pages.
 Order management is available under `/console/orders` after administrator login.
+The order list supports searching by order number or customer email, and
+filtering by order and payment status.
 Customers can look up order and delivery status at `/order-status` using the
 order number and checkout email. Lookup attempts are rate-limited.
 Categories can be created, edited, and activated/deactivated under

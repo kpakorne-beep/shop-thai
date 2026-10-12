@@ -14,13 +14,40 @@ use Illuminate\Validation\ValidationException;
 
 class AdminOrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with('payment')
-            ->latest()
-            ->paginate(20);
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:pending_payment,processing,shipped,delivered,cancelled'],
+            'payment_status' => ['nullable', 'in:awaiting_transfer,pending_review,confirmed,rejected,cancelled'],
+        ]);
 
-        return view('pages.admin.orders.index', compact('orders'));
+        $orders = Order::with('payment')
+            ->when($filters['search'] ?? null, function ($query, $search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('order_number', 'like', '%'.$search.'%')
+                        ->orWhere('customer_email', 'like', '%'.$search.'%');
+                });
+            })
+            ->when($filters['status'] ?? null, function ($query, $status) {
+                $query->where('status', $status);
+            })
+            ->when($filters['payment_status'] ?? null, function ($query, $paymentStatus) {
+                $query->whereHas('payment', function ($query) use ($paymentStatus) {
+                    $query->where('status', $paymentStatus);
+                });
+            })
+            ->latest()
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->appends(array_filter($filters, function ($value) {
+                return $value !== null && $value !== '';
+            }));
+
+        return view('pages.admin.orders.index', [
+            'orders' => $orders,
+            'filters' => $filters,
+        ]);
     }
 
     public function show(Order $order)

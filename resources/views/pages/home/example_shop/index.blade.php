@@ -21,7 +21,7 @@
             </div>
             <span class="text-muted small">Made for your everyday</span>
         </div>
-        <form class="shop-filters mb-4" method="GET" action="{{ route('shop.index') }}">
+        <form class="shop-filters mb-4" method="GET" action="{{ route('shop.index') }}#shop-products">
             <div class="search-field">
                 <label class="visually-hidden" for="search">Search products</label>
                 <span class="search-icon" aria-hidden="true">⌕</span>

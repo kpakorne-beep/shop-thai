@@ -74,7 +74,8 @@ class StorefrontTest extends TestCase
         $this->get(route('shop.index', ['search' => 'cotton', 'category' => 'accessories']))
             ->assertOk()
             ->assertSee('Canvas Bag')
-            ->assertDontSee('Ceramic Cup');
+            ->assertDontSee('Ceramic Cup')
+            ->assertSee('action="'.route('shop.index').'#shop-products"', false);
 
         $this->get(route('shop.index', ['category' => 'missing-category']))
             ->assertOk()

@@ -24,7 +24,7 @@
             </div>
         </nav>
     @endunless
-    <main class="page {{ request()->routeIs('login') ? 'admin-login-shell' : '' }}">
+    <main class="page{{ request()->routeIs('login') ? ' admin-login-shell' : '' }}">
         @include($page, $data)
     </main>
 </body>

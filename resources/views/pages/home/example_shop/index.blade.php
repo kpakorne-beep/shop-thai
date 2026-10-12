@@ -33,7 +33,7 @@
                 <select class="form-select" id="category" name="category">
                     <option value="">All categories</option>
                     @foreach ($categories as $category)
-                        <option value="{{ $category->slug }}" @selected($categorySlug === $category->slug)>
+                        <option value="{{ $category->slug }}" @selected($categorySlug === $category->
                             {{ $category->name }}
                         </option>
                     @endforeach

@@ -17,7 +17,7 @@ class CartController extends Controller
             return ! $item['available'];
         });
 
-        return view('pages.home.cart.index', compact('items', 'subtotal', 'hasUnavailableItems'));
+        return $this->view('pages.home.cart.index', compact('items', 'subtotal', 'hasUnavailableItems'));
     }
 
     public function store(Request $request, Product $product)
